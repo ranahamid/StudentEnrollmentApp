@@ -1,11 +1,34 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using StudentEnrollment.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+var conn = builder.Configuration.GetConnectionString("StudentEnrollmentDbConnection");
+
+ builder.Services.AddDbContext<StudentEnrollmentDbContext>(options =>
+ {
+     options.UseSqlServer(conn
+         ,b => b.MigrationsAssembly("StudentEnrollment.API")
+         );
+ });
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",x =>
+    {
+        x.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -19,6 +42,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
+
 
 var summaries = new[]
 {
@@ -38,6 +63,15 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast")
+.WithOpenApi();
+
+
+
+app.MapGet("/getscore", () =>
+{
+    return 0;
+})
+.WithName("getscoreresult")
 .WithOpenApi();
 
 app.Run();
