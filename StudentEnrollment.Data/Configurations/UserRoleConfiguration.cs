@@ -9,20 +9,20 @@ using System.Threading.Tasks;
 
 namespace StudentEnrollment.Data.Configurations
 {
-    public class UserRoleConfiguration : IEntityTypeConfiguration<IdentityRole>
+    public  class UserRoleConfiguration : IEntityTypeConfiguration<IdentityUserRole<string>>
     {
-        public void Configure(EntityTypeBuilder<IdentityRole> builder)
+        public void Configure(EntityTypeBuilder<IdentityUserRole<string>> builder)
         {
             builder.HasData(
-                new IdentityRole
+                new IdentityUserRole<string>
                 {
-                    Name = "Administrator",
-                    NormalizedName = "ADMINISTRATOR"
+                    RoleId = "d1b5952a-2162-46c7-b29e-1a2a68922c14",
+                    UserId = "408aa945-3d84-4421-8342-7269ec64d949",
                 },
-                new IdentityRole
+                new IdentityUserRole<string>
                 {
-                    Name = "User",
-                    NormalizedName = "USER"
+                    RoleId = "d1b5952a-2162-46c7-b29e-1a2a68922c14",
+                    UserId = "408aa945-3d84-4421-8342-7269ec64d949",
                 }
             );
         }

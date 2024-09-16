@@ -14,7 +14,7 @@ namespace StudentEnrollment.Data
             base.OnModelCreating(builder);
 
             builder.ApplyConfiguration(new CourseConfiguration());
-            builder.ApplyConfiguration(new UserRoleConfiguration());
+            builder.ApplyConfiguration(new RoleConfiguration());
         }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Student> Students { get; set; }
