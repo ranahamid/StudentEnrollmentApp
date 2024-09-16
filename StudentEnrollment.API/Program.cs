@@ -33,12 +33,7 @@ builder.Services.AddIdentityCore<SchoolUser>()
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<StudentEnrollmentDbContext>();
 
-
-
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-
-
+ 
 builder.Services.AddAuthentication(options => {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
