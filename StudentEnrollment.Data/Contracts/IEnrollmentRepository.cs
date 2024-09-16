@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace StudentEnrollment.Data.Contracts
 {
-    public interface IEnrollmentRepository
+    public interface IEnrollmentRepository : IGenericRepository<Enrollment>
     {
     }
 }
