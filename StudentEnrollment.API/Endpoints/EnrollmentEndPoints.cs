@@ -2,6 +2,8 @@
 using StudentEnrollment.API.DTOs.Enrollment;
 using StudentEnrollment.Data.Contracts;
 using StudentEnrollment.Data;
+using System.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EnrollmentEnrollment.API.Endpoints
 {
@@ -9,7 +11,7 @@ namespace EnrollmentEnrollment.API.Endpoints
     {
         public static void MapEnrollmentEndPoints(this IEndpointRouteBuilder routes)
         {
-            routes.MapGet("/api/Enrollment", async (IEnrollmentRepository _repo, IMapper _mapper) =>
+            routes.MapGet("/api/Enrollment", [Authorize(Roles = "Administrator")] async (IEnrollmentRepository _repo, IMapper _mapper) =>
             {
                 var Enrollments = await _repo.GetAllAsync();
                 var data = _mapper.Map<List<EnrollmentDto>>(Enrollments);

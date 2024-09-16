@@ -12,96 +12,85 @@ namespace StudentEnrollment.API.Services
     {
         private readonly UserManager<SchoolUser> _userManager;
         private readonly IConfiguration _configuration;
-        private SchoolUser? _schoolUser;
-
+        private SchoolUser? _user;
         public AuthManager(UserManager<SchoolUser> userManager, IConfiguration configuration)
         {
-            _userManager = userManager;
-            _configuration = configuration;
+            this._userManager = userManager;
+            this._configuration = configuration;
         }
 
         public async Task<AuthResponseDto> Login(LoginDto loginDto)
         {
-            _schoolUser = await _userManager.FindByEmailAsync(loginDto.EmailAddress);
-            if(_schoolUser is null)
+            _user = await _userManager.FindByEmailAsync(loginDto.EmailAddress);
+            if (_user is null)
             {
                 return default;
             }
-            bool isValidCredential= await _userManager.CheckPasswordAsync(_schoolUser, loginDto.Password);
-            if (!isValidCredential)
+
+            bool isValidCredentials = await _userManager.CheckPasswordAsync(_user, loginDto.Password);
+
+            if (!isValidCredentials)
             {
                 return default;
             }
+
+            // Generate Token Here......
             var token = await GenerateTokenAsync();
+
             return new AuthResponseDto
             {
-                UserId = _schoolUser.Id,
-                Token = token
+                Token = token,
+                UserId = _user.Id
             };
-            // Implementation here
         }
 
-        public async  Task<IEnumerable<IdentityError>> Register(RegisterDto registerDto)
+        public async Task<IEnumerable<IdentityError>> Register(RegisterDto registerDto)
         {
-            // Implementation here
-            _schoolUser = new SchoolUser
+            _user = new SchoolUser
             {
                 DateOfBirth = registerDto.DateOfBirth,
                 Email = registerDto.EmailAddress,
                 UserName = registerDto.EmailAddress,
                 FirstName = registerDto.FirstName,
                 LastName = registerDto.LastName
-
             };
-            var result =await _userManager.CreateAsync(_schoolUser, registerDto.Password);
-            if(result.Succeeded)
+
+            var result = await _userManager.CreateAsync(_user, registerDto.Password);
+
+            if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(_schoolUser, "User");
+                await _userManager.AddToRoleAsync(_user, "User");
             }
+
             return result.Errors;
         }
 
         private async Task<string> GenerateTokenAsync()
         {
-            var userClaims = await _userManager.GetClaimsAsync(_schoolUser);
-            var roles = await _userManager.GetRolesAsync(_schoolUser);
-            var roleClaims = new List<Claim>();
-            for (int i = 0; i < roles.Count; i++)
-            {
-                roleClaims.Add(new Claim(ClaimTypes.Role, roles[i]));
-            }
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var roles = await _userManager.GetRolesAsync(_user);
+            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList();
+            var userClaims = await _userManager.GetClaimsAsync(_user);
 
             var claims = new List<Claim>
-            {  
-                new Claim("userId", _schoolUser.Id), 
-
-
-                new Claim(JwtRegisteredClaimNames.Sub, _schoolUser.UserName),
-                new Claim(ClaimTypes.Name, _schoolUser.UserName),
-                new Claim("fullName", _schoolUser.FirstName + " " + _schoolUser.LastName),
-                new Claim(ClaimTypes.Email, _schoolUser.Email),
-                //new Claim(CustomClaimTypes.Uid, _schoolUser.Id),
-
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, _user.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                //new Claim(JwtRegisteredClaimNames.Aud, _configuration["Jwt:Audience"]),
-                //new Claim(JwtRegisteredClaimNames.Iss, _configuration["Jwt:Issuer"])
+                new Claim(JwtRegisteredClaimNames.Email, _user.Email),
+                new Claim("userId", _user.Id),
             }.Union(userClaims).Union(roleClaims);
 
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Key"]));
-            var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-
-            var expiration = DateTime.Now.AddMinutes(Convert.ToInt32(_configuration["JwtSettings:DurationInHours"]));
-            var jwtSecurityToken = new JwtSecurityToken
-            (
+            var token = new JwtSecurityToken(
                 issuer: _configuration["JwtSettings:Issuer"],
                 audience: _configuration["JwtSettings:Audience"],
                 claims: claims,
-                expires: expiration,
-                signingCredentials: signingCredentials
-            );
-            // return jwtSecurityToken;
-            return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
-        }
+                expires: DateTime.Now.AddHours(Convert.ToInt32(_configuration["JwtSettings:DurationInHours"])),
+                signingCredentials: credentials
+                );
 
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }

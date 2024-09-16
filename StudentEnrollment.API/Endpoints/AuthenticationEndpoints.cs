@@ -12,49 +12,52 @@ namespace StudentEnrollment.API.Endpoints
     public static class AuthenticationEndpoints
     {
         public static void MapAuthenticationEndpoints(this IEndpointRouteBuilder routes)
-        { 
-
-            routes.MapPost("/api/login", async (  LoginDto loginDto, IAuthManager _authManager) =>
-            {
-                var response = await _authManager.Login(loginDto);
-                if (response is null)
+        {
+            routes.MapPost("/api/login/", async (LoginDto loginDto, IAuthManager authManager) =>
                 {
-                    return Results.Unauthorized();
-                }
-                return Results.Ok(response);
-            })
-    .WithTags("Authentication")
-    .WithName("Login")
-    .Produces(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status401Unauthorized);
+                    var response = await authManager.Login(loginDto);
 
-
-
-            routes.MapPost("/api/register", async (RegisterDto registerDto, IAuthManager _authManager) =>
-            {
-                var response = await _authManager.Register(registerDto);
-                if (!response.Any())
-                {
-                    return Results.Ok();
-                }
-                var errors = new List<ErrorResponseDto>();
-                foreach (var error in response)
-                {
-                    errors.Add(new ErrorResponseDto
+                    if (response is null)
                     {
-                        Code = error.Code,
-                        Description = error.Description
-                    });
-                }
-                return Results.BadRequest(errors);
+                        return Results.Unauthorized();
+                    }
 
-            })
-   .WithTags("Authentication")
-   .WithName("Register")
-   .Produces(StatusCodes.Status200OK)
-    .Produces(StatusCodes.Status400BadRequest);
+                    return Results.Ok(response);
 
+                })
+                .AllowAnonymous()
+                .WithTags("Authentication")
+                .WithName("Login")
+                .Produces(StatusCodes.Status200OK)
+                .Produces(StatusCodes.Status401Unauthorized);
 
+            routes.MapPost("/api/register/", async (RegisterDto registerDto, IAuthManager authManager) =>
+                {
+                    var response = await authManager.Register(registerDto);
+
+                    if (!response.Any())
+                    {
+                        return Results.Ok();
+                    }
+
+                    var errors = new List<ErrorResponseDto>();
+                    foreach (var error in response)
+                    {
+                        errors.Add(new ErrorResponseDto
+                        {
+                            Code = error.Code,
+                            Description = error.Description
+                        });
+                    }
+
+                    return Results.BadRequest(errors);
+
+                })
+                .AllowAnonymous()
+                .WithTags("Authentication")
+                .WithName("Register")
+                .Produces(StatusCodes.Status200OK)
+                .Produces(StatusCodes.Status400BadRequest);
         }
     }
 }
