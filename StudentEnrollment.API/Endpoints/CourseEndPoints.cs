@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using StudentEnrollment.API.DTOs.Course;
 using StudentEnrollment.Data.Contracts;
 using StudentEnrollment.Data;
+using FluentValidation;
+using StudentEnrollment.API.DTOs.Authentication;
+using StudentEnrollment.API.DTOs.Enrollment;
+using StudentEnrollment.API.Filters;
 
 namespace StudentEnrollment.API.Endpoints
 {
@@ -17,7 +21,7 @@ namespace StudentEnrollment.API.Endpoints
                 return data;
             })
          .WithTags(nameof(Course))
-         
+
          .WithName("GetAllCourses")
          .Produces<List<CourseDto>>(StatusCodes.Status200OK);
 
@@ -38,6 +42,7 @@ namespace StudentEnrollment.API.Endpoints
                 return await _repo.GetStudentList(id) is Course model ? Results.Ok(_mapper.Map<CourseDetailsDto>(model))
                        : Results.NotFound();
             })
+
          .WithTags(nameof(Course))
          .WithName("GetCourseDetailsById")
          .Produces<CourseDetailsDto>(StatusCodes.Status200OK)
@@ -45,17 +50,25 @@ namespace StudentEnrollment.API.Endpoints
 
 
 
-            routes.MapPut("/api/Course/{id}", async (int id, CourseDto CourseDto, ICourseRepository _repo, IMapper _mapper) =>
-            {
-                var Course = await _repo.GetAsync(id);
-                if (Course is null)
+            routes.MapPut("/api/Course/{id}", async (int id, CourseDto CourseDto, ICourseRepository _repo, IMapper _mapper,
+                    IValidator<CourseDto> validator) =>
                 {
-                    return Results.NotFound();
-                }
-                _mapper.Map(CourseDto, Course);
-                await _repo.UpdateAsync(Course);
-                return Results.NoContent();
-            })
+                    var validationResult =await validator.ValidateAsync(CourseDto);
+                    if (!validationResult.IsValid)
+                    {
+                        return Results.BadRequest(validationResult.ToDictionary());
+                    }
+                    var Course = await _repo.GetAsync(id);
+                    if (Course is null)
+                    {
+                        return Results.NotFound();
+                    }
+                    _mapper.Map(CourseDto, Course);
+                    await _repo.UpdateAsync(Course);
+                    return Results.NoContent();
+                })
+            //.AddEndpointFilter<ValidationFilter<CourseDto>>()
+            .AddEndpointFilter<LoggingFilter>()
          .WithTags(nameof(Course))
          .WithName("UpdateCourse")
          .Produces(StatusCodes.Status204NoContent)
@@ -63,12 +76,20 @@ namespace StudentEnrollment.API.Endpoints
 
 
 
-            routes.MapPost("/api/Course/{id}", async (CreateCourseDto CourseDto, ICourseRepository _repo, IMapper _mapper) =>
+            routes.MapPost("/api/Course/{id}", async (CreateCourseDto courseDto, ICourseRepository _repo, IMapper _mapper, IValidator<CreateCourseDto> validator) =>
             {
-                var Course = _mapper.Map<Course>(CourseDto);
+                var validationResult = await validator.ValidateAsync(courseDto);
+                if (!validationResult.IsValid)
+                {
+                    return Results.BadRequest(validationResult.ToDictionary());
+                }
+
+                var Course = _mapper.Map<Course>(courseDto);
                 await _repo.AddAsync(Course);
                 return Results.Created($"/Courses/{Course.Id}", Course);
             })
+        //    .AddEndpointFilter<ValidationFilter<CreateCourseDto>>()
+            .AddEndpointFilter<LoggingFilter>()
    .WithTags(nameof(Course))
    .WithName("CreateCourse")
    .Produces(StatusCodes.Status201Created);

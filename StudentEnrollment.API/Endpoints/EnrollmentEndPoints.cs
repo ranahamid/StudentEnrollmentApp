@@ -4,6 +4,9 @@ using StudentEnrollment.Data.Contracts;
 using StudentEnrollment.Data;
 using System.Data;
 using Microsoft.AspNetCore.Authorization;
+using FluentValidation;
+using StudentEnrollment.API.DTOs.Course;
+using StudentEnrollment.API.Filters;
 
 namespace EnrollmentEnrollment.API.Endpoints
 {
@@ -45,17 +48,25 @@ namespace EnrollmentEnrollment.API.Endpoints
 
 
 
-            routes.MapPut("/api/Enrollment/{id}", async (int id, EnrollmentDto EnrollmentDto, IEnrollmentRepository _repo, IMapper _mapper) =>
+            routes.MapPut("/api/Enrollment/{id}", async (int id, EnrollmentDto enrollmentDto, IEnrollmentRepository _repo, IMapper _mapper,
+                    IValidator<EnrollmentDto> validator) =>
             {
-                var Enrollment = await _repo.GetAsync(id);
-                if (Enrollment is null)
+                var validationResult = await validator.ValidateAsync(enrollmentDto);
+                if (!validationResult.IsValid)
+                {
+                    return Results.BadRequest(validationResult.ToDictionary());
+                }
+                var enrollment = await _repo.GetAsync(id);
+                if (enrollment is null)
                 {
                     return Results.NotFound();
                 }
-                _mapper.Map(EnrollmentDto, Enrollment);
-                await _repo.UpdateAsync(Enrollment);
+                _mapper.Map(enrollmentDto, enrollment);
+                await _repo.UpdateAsync(enrollment);
                 return Results.NoContent();
             })
+           // .AddEndpointFilter<ValidationFilter<EnrollmentDto>>()
+            .AddEndpointFilter<LoggingFilter>()
          .WithTags(nameof(Enrollment))
          .WithName("UpdateEnrollment")
          .Produces(StatusCodes.Status204NoContent)
@@ -63,12 +74,20 @@ namespace EnrollmentEnrollment.API.Endpoints
 
 
 
-            routes.MapPost("/api/Enrollment/{id}", async (CreateEnrollmentDto EnrollmentDto, IEnrollmentRepository _repo, IMapper _mapper) =>
+            routes.MapPost("/api/Enrollment/{id}", async (CreateEnrollmentDto enrollmentDto, IEnrollmentRepository _repo, IMapper _mapper, 
+                    IValidator<CreateEnrollmentDto> validator) =>
             {
-                var enrollment = _mapper.Map<Enrollment>(EnrollmentDto);
+                var validationResult = await validator.ValidateAsync(enrollmentDto);
+                if (!validationResult.IsValid)
+                {
+                    return Results.BadRequest(validationResult.ToDictionary());
+                }
+                var enrollment = _mapper.Map<Enrollment>(enrollmentDto);
                 await _repo.AddAsync(enrollment);
                 return Results.Created($"/Enrollments/{enrollment.Id}", enrollment);
             })
+            .AddEndpointFilter<ValidationFilter<CreateEnrollmentDto>>()
+           // .AddEndpointFilter<LoggingFilter>()
    .WithTags(nameof(Enrollment))
    .WithName("CreateEnrollment")
    .Produces(StatusCodes.Status201Created);

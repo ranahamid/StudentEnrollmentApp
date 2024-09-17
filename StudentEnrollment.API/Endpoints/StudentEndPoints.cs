@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
+using FluentValidation;
+using StudentEnrollment.API.DTOs.Enrollment;
 using StudentEnrollment.API.DTOs.Student;
 using StudentEnrollment.API.Filters;
+using StudentEnrollment.API.Services;
 using StudentEnrollment.Data;
 using StudentEnrollment.Data.Contracts;
 
@@ -44,17 +47,31 @@ namespace StudentEnrollment.API.Endpoints
 
 
 
-            routes.MapPut("/api/Student/{id}", async (int id, StudentDto studentDto, IStudentRepository _repo, IMapper _mapper) =>
+            routes.MapPut("/api/Student/{id}", async (int id, StudentDto studentDto, IStudentRepository _repo, IMapper _mapper,
+                    IValidator<StudentDto> validator, IFileUpload _fileUpload) =>
             {
+                var validationResult = await validator.ValidateAsync(studentDto);
+                if (!validationResult.IsValid)
+                {
+                    return Results.BadRequest(validationResult.ToDictionary());
+                }
+
                 var student = await _repo.GetAsync(id);
                 if (student is null)
                 {
                     return Results.NotFound();
                 }
                 _mapper.Map(studentDto, student);
+                if (studentDto.ProfilePicture != null)
+                {
+                    student.Picture =
+                        _fileUpload.UploadStudentFile(studentDto.ProfilePicture, studentDto.OriginalFileName);
+                }
                 await _repo.UpdateAsync(student);
                 return Results.NoContent();
             })
+            .AddEndpointFilter<ValidationFilter<StudentDto>>()
+            .AddEndpointFilter<LoggingFilter>()
          .WithTags(nameof(Student))
          .WithName("UpdateStudent")
          .Produces(StatusCodes.Status204NoContent)
@@ -62,13 +79,26 @@ namespace StudentEnrollment.API.Endpoints
 
 
 
-            routes.MapPost("/api/Student/{id}", async (CreateStudentDto studentDto, IStudentRepository _repo, IMapper _mapper) =>
+            routes.MapPost("/api/Student/{id}", async (CreateStudentDto studentDto, IStudentRepository _repo, IMapper _mapper,
+                    IValidator<CreateStudentDto> validator, IFileUpload _fileUpload) =>
             {
+                var validationResult = await validator.ValidateAsync(studentDto);
+                if (!validationResult.IsValid)
+                {
+                    return Results.BadRequest(validationResult.ToDictionary());
+                }
+
+
                 var student = _mapper.Map<Student>(studentDto);
+                if (studentDto.ProfilePicture != null)
+                {
+                    student.Picture =
+                        _fileUpload.UploadStudentFile(studentDto.ProfilePicture, studentDto.OriginalFileName);
+                }
                 await _repo.AddAsync(student);
                 return Results.Created($"/students/{student.Id}", student);
             })
-            .AddEndpointFilter<ValidationFilter<CreateStudentDto>>()
+         //   .AddEndpointFilter<ValidationFilter<CreateStudentDto>>()
             .AddEndpointFilter<LoggingFilter>()
    .WithTags(nameof(Student))
    .WithName("CreateStudent")
