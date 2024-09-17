@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using StudentEnrollment.API.DTOs.Student;
+using StudentEnrollment.API.Filters;
 using StudentEnrollment.Data;
 using StudentEnrollment.Data.Contracts;
 
@@ -67,6 +68,8 @@ namespace StudentEnrollment.API.Endpoints
                 await _repo.AddAsync(student);
                 return Results.Created($"/students/{student.Id}", student);
             })
+            .AddEndpointFilter<ValidationFilter<CreateStudentDto>>()
+            .AddEndpointFilter<LoggingFilter>()
    .WithTags(nameof(Student))
    .WithName("CreateStudent")
    .Produces(StatusCodes.Status201Created);
@@ -83,6 +86,6 @@ namespace StudentEnrollment.API.Endpoints
         .Produces(StatusCodes.Status404NotFound);
 
 
-        }  
+        }
     }
 }

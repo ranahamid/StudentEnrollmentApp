@@ -9,8 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
 	  <PackageReference Include="AspNetCoreRateLimit" Version="5.0.0" />
 	  <PackageReference Include="AutoMapper" Version="13.0.1" />
+	  <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.10.0" />
 	  <PackageReference Include="InstantAPIs" Version="0.2.0" />
 	  <PackageReference Include="Marvin.Cache.Headers" Version="7.1.0" />
 	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />

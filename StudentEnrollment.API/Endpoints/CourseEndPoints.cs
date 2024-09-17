@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using StudentEnrollment.API.DTOs.Course;
 using StudentEnrollment.Data.Contracts;
 using StudentEnrollment.Data;
@@ -9,13 +10,14 @@ namespace StudentEnrollment.API.Endpoints
     {
         public static void MapCourseEndPoints(this IEndpointRouteBuilder routes)
         {
-            routes.MapGet("/api/Course", async (ICourseRepository _repo, IMapper _mapper) =>
+            routes.MapGet("/api/Course", [Authorize(Roles = "Administrator")] async (ICourseRepository _repo, IMapper _mapper) =>
             {
                 var Courses = await _repo.GetAllAsync();
                 var data = _mapper.Map<List<CourseDto>>(Courses);
                 return data;
             })
          .WithTags(nameof(Course))
+         
          .WithName("GetAllCourses")
          .Produces<List<CourseDto>>(StatusCodes.Status200OK);
 
