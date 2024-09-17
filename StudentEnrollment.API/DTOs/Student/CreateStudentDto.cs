@@ -9,7 +9,7 @@ namespace StudentEnrollment.API.DTOs.Student
         public DateTime DateofBirth { get; set; }
         public string IdNumber { get; set; }
         public byte[]? ProfilePicture { get; set; }
-        public string OriginalFileName { get; set; }
+        public string? OriginalFileName { get; set; }
     }
 
     public class CreateStudentDtoValidator : AbstractValidator<CreateStudentDto>

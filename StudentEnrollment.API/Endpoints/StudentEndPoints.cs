@@ -90,15 +90,16 @@ namespace StudentEnrollment.API.Endpoints
 
 
                 var student = _mapper.Map<Student>(studentDto);
-                if (studentDto.ProfilePicture != null)
-                {
+
+             
                     student.Picture =
                         _fileUpload.UploadStudentFile(studentDto.ProfilePicture, studentDto.OriginalFileName);
-                }
+             
+
                 await _repo.AddAsync(student);
                 return Results.Created($"/students/{student.Id}", student);
             })
-         //   .AddEndpointFilter<ValidationFilter<CreateStudentDto>>()
+            //   .AddEndpointFilter<ValidationFilter<CreateStudentDto>>()
             .AddEndpointFilter<LoggingFilter>()
    .WithTags(nameof(Student))
    .WithName("CreateStudent")

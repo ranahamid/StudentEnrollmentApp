@@ -65,7 +65,7 @@ namespace EnrollmentEnrollment.API.Endpoints
                 await _repo.UpdateAsync(enrollment);
                 return Results.NoContent();
             })
-           // .AddEndpointFilter<ValidationFilter<EnrollmentDto>>()
+            .AddEndpointFilter<ValidationFilter<EnrollmentDto>>()
             .AddEndpointFilter<LoggingFilter>()
          .WithTags(nameof(Enrollment))
          .WithName("UpdateEnrollment")
@@ -87,7 +87,7 @@ namespace EnrollmentEnrollment.API.Endpoints
                 return Results.Created($"/Enrollments/{enrollment.Id}", enrollment);
             })
             .AddEndpointFilter<ValidationFilter<CreateEnrollmentDto>>()
-           // .AddEndpointFilter<LoggingFilter>()
+            .AddEndpointFilter<LoggingFilter>()
    .WithTags(nameof(Enrollment))
    .WithName("CreateEnrollment")
    .Produces(StatusCodes.Status201Created);

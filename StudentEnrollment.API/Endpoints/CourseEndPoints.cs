@@ -67,7 +67,7 @@ namespace StudentEnrollment.API.Endpoints
                     await _repo.UpdateAsync(Course);
                     return Results.NoContent();
                 })
-            //.AddEndpointFilter<ValidationFilter<CourseDto>>()
+            .AddEndpointFilter<ValidationFilter<CourseDto>>()
             .AddEndpointFilter<LoggingFilter>()
          .WithTags(nameof(Course))
          .WithName("UpdateCourse")
@@ -88,7 +88,7 @@ namespace StudentEnrollment.API.Endpoints
                 await _repo.AddAsync(Course);
                 return Results.Created($"/Courses/{Course.Id}", Course);
             })
-        //    .AddEndpointFilter<ValidationFilter<CreateCourseDto>>()
+           .AddEndpointFilter<ValidationFilter<CreateCourseDto>>()
             .AddEndpointFilter<LoggingFilter>()
    .WithTags(nameof(Course))
    .WithName("CreateCourse")
